@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Maps Scraper Web</title>
   <style>
     body {
@@ -12,50 +13,78 @@
       max-width: 700px;
       margin: auto;
     }
-    h1 { color: #0078D4; }
+    h1 {
+      color: #0078D4;
+      text-align: center;
+    }
+    p {
+      text-align: center;
+    }
     textarea {
       width: 100%;
       height: 120px;
       font-size: 14px;
       padding: 10px;
-      margin-bottom: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      resize: vertical;
     }
     button {
+      display: block;
+      margin: 20px auto;
       background-color: #0078D4;
       color: white;
       padding: 10px 18px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
     button:hover {
       background-color: #005fa3;
+    }
+    #status {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <h1>Google Maps Scraper Web</h1>
-  <p>Enter one or more keywords (comma separated):</p>
+  <p>Enter one or more keywords (comma-separated):</p>
 
   <textarea id="keywords" placeholder="e.g., dentist in New York, coffee shops in Bangalore"></textarea>
-  <br>
   <button onclick="scrape()">Start Scraping</button>
 
   <p id="status"></p>
 
   <script>
     async function scrape() {
-      const keywords = document.getElementById("keywords").value.split(",").map(k => k.trim());
-      document.getElementById("status").innerText = "Processing... Please wait.";
+      const statusEl = document.getElementById("status");
+      const rawInput = document.getElementById("keywords").value.trim();
+
+      if (!rawInput) {
+        statusEl.textContent = "⚠️ Please enter at least one keyword.";
+        return;
+      }
+
+      const keywords = rawInput.split(",").map(k => k.trim()).filter(k => k.length > 0);
+      statusEl.textContent = "⏳ Processing... Please wait.";
 
       try {
         const response = await fetch("/api/scrape", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keywords }),
+          body: JSON.stringify({ keywords })
         });
 
-        if (!response.ok) throw new Error("Error scraping data.");
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || "Server error while scraping.");
+        }
 
         // Download Excel file
         const blob = await response.blob();
@@ -66,10 +95,11 @@
         document.body.appendChild(a);
         a.click();
         a.remove();
+        window.URL.revokeObjectURL(url);
 
-        document.getElementById("status").innerText = "✅ File downloaded successfully!";
+        statusEl.textContent = "✅ File downloaded successfully!";
       } catch (err) {
-        document.getElementById("status").innerText = "❌ Error: " + err.message;
+        statusEl.textContent = "❌ Error: " + err.message;
       }
     }
   </script>
