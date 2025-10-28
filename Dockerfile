@@ -1,17 +1,20 @@
-# Use an older, stable Python base image
-FROM python:3.10.13-slim
+# Use lightweight Python image
+FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy dependency list
+COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port for Render
-EXPOSE 8000
+# Copy all project files
+COPY . .
 
-# Start the Flask app with Gunicorn
-CMD ["gunicorn", "api.index:app", "--bind", "0.0.0.0:8000"]
+# Expose Render port (Render auto-assigns PORT)
+EXPOSE 10000
+
+# Run the Flask app via Gunicorn
+CMD gunicorn api.index:app --bind 0.0.0.0:$PORT
