@@ -1,20 +1,19 @@
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, send_from_directory
 import pandas as pd
 import io
+import os
 from datetime import datetime
 
-app = Flask(__name__)
+# Tell Flask where your static folder is (one level up)
+app = Flask(__name__, static_folder="../static", static_url_path="/static")
 
 # -----------------------------
 # Root route (homepage)
 # -----------------------------
 @app.route("/", methods=["GET"])
 def home():
-    return """
-    <h2>Google Maps Scraper – Online</h2>
-    <p>✅ Backend is live and working!</p>
-    <p>Go to <a href="/static/index.html">Click here to open the Web App</a>.</p>
-    """
+    """Serve the frontend HTML"""
+    return send_from_directory(app.static_folder, "index.html")
 
 # -----------------------------
 # Scraper API route
@@ -48,7 +47,8 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 # -----------------------------
-# Local run (ignored by Render)
+# Local run (for development)
 # -----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port)
